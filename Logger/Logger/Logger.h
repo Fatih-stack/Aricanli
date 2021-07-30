@@ -137,12 +137,5 @@ namespace aricanli {
 				file.open(file_path);
 			}
 		};
-
-		#define LOG_FATAL(Message, ...) (Logger::Fatal(__LINE__, __FILE__, Message, __VA_ARGS__))
-		#define LOG_ERROR(Message, ...) (Logger::Error(__LINE__, __FILE__, Message, __VA_ARGS__))
-		#define LOG_INFO(Message, ...) (Logger::Info(__LINE__, __FILE__, Message, __VA_ARGS__))
-		#define LOG_WARN(Message, ...) (Logger::Warn(__LINE__, __FILE__, Message, __VA_ARGS__))
-		#define LOG_DEBUG(Message, ...) (Logger::Debug(__LINE__, __FILE__, Message, __VA_ARGS__))
-		#define LOG_VERBOSE(Message, ...) (Logger::Verbose(__LINE__, __FILE__, Message, __VA_ARGS__))
 	}
 }

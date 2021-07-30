@@ -8,12 +8,9 @@ using namespace std;
 using namespace aricanli::general;
 
 void log_test(int n) {
-	LOG_DEBUG("debugging %d", n, "Write Args", 3434, 3334);
-	LOG_WARN("warning %d", n, "Write Args Warn", 1234, 1234, 7853);
-	LOG_ERROR("error %d", n, "Args Errrrrrrorrrrr");
-	LOG_FATAL("fatal error %d", n);
-	LOG_INFO("info : %d", n);
-	LOG_VERBOSE("Verbose %d", n);
+	Logger::Fatal(__LINE__, __FILE__, "fatal error %d ", n, " fdfdv ", 234);
+	Logger::Debug(__LINE__, __FILE__, "debugging %d ", n, "Write Args", 3434, 3334);
+	Logger::Error(__LINE__, __FILE__, "error %d ", n, "Args Errrrrrrorrrrr");
 }
 
 int main()
