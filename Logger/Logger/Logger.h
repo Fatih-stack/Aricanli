@@ -19,9 +19,9 @@ namespace aricanli {
 		{
 		private:
 			Severity severity = Severity::none;
-			std::mutex log_mutex;
-			std::string file_path = "";
-			std::ofstream file;
+			static std::mutex log_mutex;
+			static std::string file_path;
+			static std::ofstream file;
 
 		protected:
 			template <typename T>
@@ -75,11 +75,17 @@ namespace aricanli {
 				get_instance().log(line, source_file, "[Verbose]\t", Severity::verbose, message, args...);
 			}
 
+			static void enable_file_output(const std::string& new_file_path)
+			{
+				file.close();
+				file_path = new_file_path;
+				file.open(file_path);
+			}
+
 		private:
 			Logger()
 			{
-				file_path = "C:\\Users\\hp\\source\\repos\\log.txt";
-				enable_file_output(file_path);
+				enable_file_output();
 			}
 
 			Logger(const Logger&) = delete;
@@ -130,12 +136,13 @@ namespace aricanli {
 				file.open(file_path);
 			}
 
-			void enable_file_output(const std::string& new_file_path)
-			{
-				file.close();
-				file_path = new_file_path;
-				file.open(file_path);
-			}
+
+			#define LOG_FATAL(Message, ...) (Logger::Fatal(__LINE__, __FILE__, Message, __VA_ARGS__))
+			#define LOG_ERROR(Message, ...) (Logger::Error(__LINE__, __FILE__, Message, __VA_ARGS__))
+			#define LOG_INFO(Message, ...) (Logger::Info(__LINE__, __FILE__, Message, __VA_ARGS__))
+			#define LOG_WARN(Message, ...) (Logger::Warn(__LINE__, __FILE__, Message, __VA_ARGS__))
+			#define LOG_DEBUG(Message, ...) (Logger::Debug(__LINE__, __FILE__, Message, __VA_ARGS__))
+			#define LOG_VERBOSE(Message, ...) (Logger::Verbose(__LINE__, __FILE__, Message, __VA_ARGS__))
 		};
 	}
 }
