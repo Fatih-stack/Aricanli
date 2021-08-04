@@ -12,7 +12,7 @@ public:
 	virtual ~CTreeCtrlXML(void);
 
 public:
-	bool LoadFromXML(const CString& a_strFile);
+	bool LoadFromXML(const char* a_strFile);
 	tinyxml2::XMLDocument xmlDoc;
 public:
 	void Load(tinyxml2::XMLElement* a_pNode);

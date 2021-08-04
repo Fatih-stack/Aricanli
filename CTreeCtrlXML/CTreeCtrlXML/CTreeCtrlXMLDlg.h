@@ -27,7 +27,6 @@ protected:
 
 // Implementation
 protected:
-
 	HICON m_hIcon;
 
 	// Generated message map functions
@@ -41,8 +40,8 @@ protected:
 
 public:
 	CTreeCtrlXML m_demoTree;	// The tree control object
+	CListCtrl m_listCtrl;		// The list control object
 	afx_msg void OnTvnSelchangedTree1(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnBnClickedOk();
 	afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
-	CListCtrl m_listCtrl;
+	
 };

@@ -1,7 +1,5 @@
 #include "stdafx.h"
-#include "CTreeCtrlXML.h"
 #include "CTreeCtrlXMLDlg.h"
-#include ".\ctreectrlxmldlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -10,7 +8,7 @@
 CCTreeCtrlXMLDlg::CCTreeCtrlXMLDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CCTreeCtrlXMLDlg::IDD, pParent)
 {
-	//	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+		m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
 void CCTreeCtrlXMLDlg::DoDataExchange(CDataExchange* pDX)
@@ -40,16 +38,10 @@ BOOL CCTreeCtrlXMLDlg::OnInitDialog()
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
-
-	m_listCtrl.InsertColumn(0, "ID", LVCFMT_LEFT, 30);
-
-	m_listCtrl.InsertColumn(1, "CompanyName", LVCFMT_CENTER, 80);
-	m_listCtrl.InsertColumn(2, "ContactName", LVCFMT_LEFT, 100);
-	m_listCtrl.InsertColumn(3, "ContactTitle", LVCFMT_LEFT, 100);
-	m_listCtrl.InsertColumn(4, "Phone", LVCFMT_LEFT, 80);
-
 	// Load the data when the dialog starts
-	if (!m_demoTree.LoadFromXML("CustomersOrdersInNamespace.xml"))
+	bool file_opened = m_demoTree.LoadFromXML("CustomersOrdersInNamespace.xml");
+	
+	if (!file_opened)
 	{
 		MessageBox("Could not load XML file!\n"
 			"Please make sure that a valid XML file called \"CustomersOrdersInNamespace.xml\" is present!", "Aaarrgh ...", MB_ICONSTOP);
@@ -98,61 +90,65 @@ HCURSOR CCTreeCtrlXMLDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+/*********************************************************************************
+ * Tree'deki item'a týklandýðýnda list'teki elemanlarý siler ve týklanan elemanýn
+ * özelliklerini parse ederek list'e ekler.
+ *********************************************************************************/
 void CCTreeCtrlXMLDlg::OnTvnSelchangedTree1(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	m_listCtrl.DeleteAllItems();
-	HTREEITEM TreeItem = m_demoTree.GetSelectedItem();
-	CString itemText = m_demoTree.GetItemText(TreeItem);
-	CString text = m_demoTree.GetItemText(m_demoTree.GetParentItem(TreeItem));
+	m_listCtrl.DeleteAllItems();		//list'teki elemanlarý sil
+	HTREEITEM TreeItem = m_demoTree.GetSelectedItem();		//tree'deki seçili item'ý al
+	CString itemText = m_demoTree.GetItemText(TreeItem);	//item'ýn text'ini al
+	CString text = m_demoTree.GetItemText(m_demoTree.GetParentItem(TreeItem));	//item'ýn parent'ýn text'ini al
+	//Item'ýn parent'i Customers Customer'a göre Orders ise Order'a göre parse et xml dosyasýný
 	if (text == "Customers") {
-		int a = m_listCtrl.InsertItem(0, "Customer ID : " + itemText);
-		tinyxml2::XMLElement* temp = m_demoTree.xmlDoc.FirstChildElement("Root");
+		m_listCtrl.InsertItem(0, "Customer ID : " + itemText);		//CustomerID'yi list'e ekle
+		tinyxml2::XMLElement* temp = m_demoTree.xmlDoc.FirstChildElement("Root");	//root'tan baþlayarak ilerle
 		tinyxml2::XMLElement* pItems = temp->FirstChildElement("Customers");
 		tinyxml2::XMLElement* pItem = pItems->FirstChildElement("Customer");
 		CString id = pItem->ToElement()->Attribute("CustomerID");
-		while (id != itemText) {
-			pItem = pItem->NextSiblingElement();
-			id = pItem->ToElement()->Attribute("CustomerID");
+		while (id != itemText) {		//Seçilen item'ý bulana kadar elemanlarý gez
+			pItem = pItem->NextSiblingElement();	//sýradaki elemana geç
+			id = pItem->ToElement()->Attribute("CustomerID");	//id'sini al item'ýn
 		}
+		//Customer child'larýný gez ve herbir child'ýn textini alarak list'e hangi özellik olduðunu belirterek ekle
 		tinyxml2::XMLElement* pCustomer = pItem->FirstChildElement();
 		tinyxml2::XMLElement* pContact = pCustomer->NextSiblingElement();
 		tinyxml2::XMLElement* phone = pContact->NextSiblingElement()->NextSiblingElement();
 		tinyxml2::XMLElement* address = phone->NextSiblingElement()->FirstChildElement();
-		CString Fax = address->GetText();
-		if (Fax != "Address") {
-			address = phone->NextSiblingElement()->NextSiblingElement()
-				->FirstChildElement();
+		CString Fax = phone->NextSiblingElement()->Value();
+		if (Fax != "FullAddress") {
+			address = phone->NextSiblingElement()->NextSiblingElement()->FirstChildElement();
+			Fax = phone->NextSiblingElement()->GetText();
 		}
-		CString value = pCustomer->FirstChildElement()->GetText();
-		CString value2 = pContact->FirstChildElement()->GetText();
-		CString value3 = pContact->NextSiblingElement()->FirstChildElement()->GetText();
-		CString value4 = phone->FirstChildElement()->GetText();
-		CString adres = address->FirstChildElement()->GetText();
-		CString city = address->NextSiblingElement()->FirstChildElement()->GetText();
-		CString region = address->NextSiblingElement()->NextSiblingElement()->FirstChildElement()->GetText();
-		CString postalCode = address->NextSiblingElement()->NextSiblingElement()
-			->NextSiblingElement()->FirstChildElement()->GetText();
+		CString value = pCustomer->GetText();
+		CString value2 = pContact->GetText();
+		CString value3 = pContact->NextSiblingElement()->GetText();
+		CString value4 = phone->GetText();
+		CString adres = address->GetText();
+		CString city = address->NextSiblingElement()->GetText();
+		CString region = address->NextSiblingElement()->NextSiblingElement()->GetText();
+		CString postalCode = address->NextSiblingElement()->NextSiblingElement()->NextSiblingElement()->GetText();
 		CString country = address->NextSiblingElement()->NextSiblingElement()
-			->NextSiblingElement()->NextSiblingElement()->FirstChildElement()->GetText();
-		//InsertItem(pEl->Attribute("CustomerID"), a_hTreeParent);
-		a = m_listCtrl.InsertItem(2, "Company Name : " + value);
-		a = m_listCtrl.InsertItem(3, "Contact Name : " + value2);
-		a = m_listCtrl.InsertItem(4, "Contact Title : " + value3);
-		a = m_listCtrl.InsertItem(5, "Phone : " + value4);
-		if (Fax != "Address")
-			a = m_listCtrl.InsertItem(7, "Fax : " + Fax);
-		a = m_listCtrl.InsertItem(6, "----- Full Address -----");
-		a = m_listCtrl.InsertItem(7, "Address : " + adres);
-		a = m_listCtrl.InsertItem(7, "City : " + city);
-		a = m_listCtrl.InsertItem(7, "Region : " + region);
-		a = m_listCtrl.InsertItem(7, "PostalCode : " + postalCode);
-		a = m_listCtrl.InsertItem(7, "Country : " + country);
-		//	m_listCtrl.SetItemText(a, 7, pEl->Attribute("Phone"));
+			->NextSiblingElement()->NextSiblingElement()->GetText();
+		m_listCtrl.InsertItem(2, "Company Name : " + value);
+		m_listCtrl.InsertItem(3, "Contact Name : " + value2);
+		m_listCtrl.InsertItem(4, "Contact Title : " + value3);
+		m_listCtrl.InsertItem(5, "Phone : " + value4);
+		if (Fax != "FullAddress") {
+			m_listCtrl.InsertItem(7, "Fax : " + Fax);
+		}
+		m_listCtrl.InsertItem(6, "----- Full Address -----");
+		m_listCtrl.InsertItem(7, "Address : " + adres);
+		m_listCtrl.InsertItem(7, "City : " + city);
+		m_listCtrl.InsertItem(7, "Region : " + region);
+		m_listCtrl.InsertItem(7, "PostalCode : " + postalCode);
+		m_listCtrl.InsertItem(7, "Country : " + country);
 	}
 	else if (text == "Orders") {
-		CString t = CString(itemText).Right(CString(itemText).GetLength() - 5);
-		int num = atoi(t);
-		int a = m_listCtrl.InsertItem(0, itemText);
+		CString orderNum = CString(itemText).Right(CString(itemText).GetLength() - 5);
+		int num = atoi(orderNum);
+		m_listCtrl.InsertItem(0, itemText);
 		tinyxml2::XMLElement* temp = m_demoTree.xmlDoc.FirstChildElement("Root");
 		tinyxml2::XMLElement* pItem = temp->FirstChildElement("Orders")->FirstChildElement("Order");
 		int i = 0;
@@ -167,47 +163,40 @@ void CCTreeCtrlXMLDlg::OnTvnSelchangedTree1(NMHDR* pNMHDR, LRESULT* pResult)
 		tinyxml2::XMLElement* ShipInfo = RequiredDate->NextSiblingElement();
 		tinyxml2::XMLElement* ShipRegion = ShipInfo->FirstChildElement()->NextSiblingElement()->NextSiblingElement()
 			->NextSiblingElement()->NextSiblingElement();
-		CString customer = pCustomerID->FirstChildElement()->GetText();
-		CString employee = pEmployeeID->FirstChildElement()->GetText();
-		CString orderDate = OrderDate->FirstChildElement()->GetText();
-		CString requiredDate = RequiredDate->FirstChildElement()->GetText();
+		CString customer = pCustomerID->GetText();
+		CString employee = pEmployeeID->GetText();
+		CString orderDate = OrderDate->GetText();
+		CString requiredDate = RequiredDate->GetText();
 		CString shippedDate = ShipInfo->ToElement()->Attribute("ShippedDate");
 		CString shipVia = ShipInfo->FirstChildElement()->GetText();
-		CString freight = ShipInfo->FirstChildElement()->NextSiblingElement()->FirstChildElement()->GetText();
+		CString freight = ShipInfo->FirstChildElement()->NextSiblingElement()->GetText();
 		CString shipName = ShipInfo->FirstChildElement()->NextSiblingElement()
-			->NextSiblingElement()->FirstChildElement()->GetText();
+			->NextSiblingElement()->GetText();
 		CString shipAddress = ShipInfo->FirstChildElement()->NextSiblingElement()->NextSiblingElement()
-			->NextSiblingElement()->FirstChildElement()->GetText();
-		CString shipCity = ShipRegion->FirstChildElement()->GetText();
-		CString shipRegion = ShipRegion->NextSiblingElement()->FirstChildElement()->GetText();
-		CString shipPostalCode = ShipRegion->NextSiblingElement()->NextSiblingElement()->FirstChildElement()->GetText();
+			->NextSiblingElement()->GetText();
+		CString shipCity = ShipRegion->GetText();
+		CString shipRegion = ShipRegion->NextSiblingElement()->GetText();
+		CString shipPostalCode = ShipRegion->NextSiblingElement()->NextSiblingElement()->GetText();
 		CString shipCountry = ShipRegion->NextSiblingElement()->NextSiblingElement()
-			->NextSiblingElement()->FirstChildElement()->GetText();
+			->NextSiblingElement()->GetText();
 		//InsertItem(pEl->Attribute("CustomerID"), a_hTreeParent);
-		a = m_listCtrl.InsertItem(2, "Customer ID : " + customer);
-		a = m_listCtrl.InsertItem(3, "Employee ID : " + employee);
-		a = m_listCtrl.InsertItem(4, "Order Date : " + orderDate);
-		a = m_listCtrl.InsertItem(5, "Required Date : " + requiredDate);
+		m_listCtrl.InsertItem(2, "Customer ID : " + customer);
+		m_listCtrl.InsertItem(3, "Employee ID : " + employee);
+		m_listCtrl.InsertItem(4, "Order Date : " + orderDate);
+		m_listCtrl.InsertItem(5, "Required Date : " + requiredDate);
 
-		a = m_listCtrl.InsertItem(6, "----- Ship Info -----");
-		a = m_listCtrl.InsertItem(7, "Shipped Date : " + shippedDate);
-		a = m_listCtrl.InsertItem(7, "Ship Via : " + shipVia);
-		a = m_listCtrl.InsertItem(7, "Freight : " + freight);
-		a = m_listCtrl.InsertItem(7, "Ship Name : " + shipName);
-		a = m_listCtrl.InsertItem(7, "Ship Address : " + shipAddress);
-		a = m_listCtrl.InsertItem(7, "Ship City : " + shipCity);
-		a = m_listCtrl.InsertItem(7, "Ship Region : " + shipRegion);
-		a = m_listCtrl.InsertItem(7, "Ship PostalCode : " + shipPostalCode);
-		a = m_listCtrl.InsertItem(7, "Ship Country : " + shipCountry);
+		m_listCtrl.InsertItem(6, "----- Ship Info -----");
+		m_listCtrl.InsertItem(7, "Shipped Date : " + shippedDate);
+		m_listCtrl.InsertItem(7, "Ship Via : " + shipVia);
+		m_listCtrl.InsertItem(7, "Freight : " + freight);
+		m_listCtrl.InsertItem(7, "Ship Name : " + shipName);
+		m_listCtrl.InsertItem(7, "Ship Address : " + shipAddress);
+		m_listCtrl.InsertItem(7, "Ship City : " + shipCity);
+		m_listCtrl.InsertItem(7, "Ship Region : " + shipRegion);
+		m_listCtrl.InsertItem(7, "Ship PostalCode : " + shipPostalCode);
+		m_listCtrl.InsertItem(7, "Ship Country : " + shipCountry);
 	}
 }
-
-void CCTreeCtrlXMLDlg::OnBnClickedOk()
-{
-	// TODO: Add your control notification handler code here
-	CDialog::OnOK();
-}
-
 
 void CCTreeCtrlXMLDlg::OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 {
