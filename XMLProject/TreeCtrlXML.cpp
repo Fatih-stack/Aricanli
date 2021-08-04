@@ -1,8 +1,8 @@
 
 
-#include "CTreeCtrlXMLDlg.h"
+#include "TreeCtrlXML.h"
 #include <direct.h>		// Needed for getcwd()
-CCTreeCtrlXMLDlg c;
+
 CTreeCtrlXML::CTreeCtrlXML(void)
 {
 }
@@ -13,7 +13,7 @@ CTreeCtrlXML::~CTreeCtrlXML(void)
 
 bool CTreeCtrlXML::LoadFromXML( const CString& a_strFile )
 {
-	TiXmlNode* pXML = NULL;
+	tinyxml2::XMLElement* pXML = NULL;
 	
 	char szBuf[ _MAX_PATH + 1 ];
 	CString strTemp = a_strFile;
@@ -23,7 +23,7 @@ bool CTreeCtrlXML::LoadFromXML( const CString& a_strFile )
 	if(xmlDoc.LoadFile( szBuf ) )
 	{
 		// XML root
-		pXML = xmlDoc.FirstChild( "Root" );
+		pXML = xmlDoc.RootElement();
 		if( NULL == pXML )
 			return false;
 		// Load our tree control
@@ -35,46 +35,46 @@ bool CTreeCtrlXML::LoadFromXML( const CString& a_strFile )
 	return false;
 }
 
-void CTreeCtrlXML::Load( TiXmlNode* a_pNode )
+void CTreeCtrlXML::Load(tinyxml2::XMLElement* a_pNode )
 {
 	ASSERT( NULL != a_pNode );
 	// Get node "Items"
-	TiXmlNode* pItems = a_pNode->FirstChild( "Customers" );
+	tinyxml2::XMLElement* pItems = a_pNode->FirstChildElement("Customers");
 	HTREEITEM a_hTreeParent;
 	a_hTreeParent = InsertItem("Customers", TVI_ROOT);
-	TiXmlNode* pItem = NULL;
+	tinyxml2::XMLElement* pItem = NULL;
 	if( NULL == pItems )
 		return;
 	// Get first item
-	pItem = pItems->FirstChild( "Customer" );
+	pItem = pItems->FirstChildElement("Customer");
 	// Iterate all siblings
 	while( NULL != pItem )
 	{
 		LoadItem( pItem, a_hTreeParent, "Customer");
-		pItem = pItem->NextSibling("Customer");
+		pItem = pItem->NextSiblingElement("Customer");
 	}
 
-	TiXmlNode* pItems2 = a_pNode->FirstChild("Orders");
+	tinyxml2::XMLElement* pItems2 = a_pNode->FirstChildElement("Orders");
 	HTREEITEM a_hTreeParent2;
 	a_hTreeParent2 = InsertItem("Orders", TVI_ROOT);
-	TiXmlNode* pItem2 = NULL;
+	tinyxml2::XMLElement* pItem2 = NULL;
 	if (NULL == pItems2)
 		return;
 	// Get first item
-	pItem2 = pItems2->FirstChild("Order");
+	pItem2 = pItems2->FirstChildElement("Order");
 	// Iterate all siblings
 	while (NULL != pItem2)
 	{
 		LoadItem(pItem2, a_hTreeParent2, "Order");
-		pItem2 = pItem2->NextSibling("Order");
+		pItem2 = pItem2->NextSiblingElement("Order");
 	}
 }
 
-void CTreeCtrlXML::LoadItem( TiXmlNode* a_pNode, HTREEITEM a_hTreeParent, CString tag)
+void CTreeCtrlXML::LoadItem(tinyxml2::XMLElement* a_pNode, HTREEITEM a_hTreeParent, CString tag)
 {
-	TiXmlElement* pEl = a_pNode->ToElement();
+	tinyxml2::XMLElement* pEl = a_pNode->ToElement();
 	HTREEITEM hItem = NULL;
-	TiXmlNode* pChild = a_pNode->IterateChildren(tag, NULL);
+	tinyxml2::XMLElement* pChild = a_pNode->FirstChildElement(tag);
 	if(tag == "Customer"){
 		hItem = InsertItem( pEl->Attribute( "CustomerID" ), a_hTreeParent);
 	}
@@ -85,7 +85,7 @@ void CTreeCtrlXML::LoadItem( TiXmlNode* a_pNode, HTREEITEM a_hTreeParent, CStrin
 	while( pChild )
 	{
 		LoadItem( pChild, hItem, tag);
-		pChild = a_pNode->IterateChildren( tag, pChild );
+		pChild = pChild->NextSiblingElement(tag);
 	}
 }
 
